@@ -40,7 +40,7 @@ def main():
 
 # Create the background which will scroll and loop over a set of different
 # size stars
-    background = pygame.Surface((500, 2000))
+    background = pygame.Surface((500, 1000))
     background = background.convert()
     background.fill((0, 0, 0))
     backgroundLoc = 1500
