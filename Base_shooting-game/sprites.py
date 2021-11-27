@@ -51,7 +51,7 @@ class Missile(MasterSprite):
             missile.add(cls.allsprites, cls.active)
             missile.remove(cls.pool)
             missile.rect.midbottom = loc
-
+    
     def table(self):
         self.add(self.pool)
         self.remove(self.allsprites, self.active)
@@ -77,7 +77,7 @@ class Bomb(pygame.sprite.Sprite):
         self.radius += self.radiusIncrement
         pygame.draw.circle(
             pygame.display.get_surface(),
-            pygame.Color(0, 0, 255, 128),
+            pygame.Color(153, 76, 0, 128),
             self.rect.center, self.radius, 3)
         if (self.rect.center[1] - self.radius <= self.area.top
             and self.rect.center[1] + self.radius >= self.area.bottom
@@ -122,6 +122,21 @@ class ShieldPowerup(Powerup):
         super().__init__('shield')
         self.pType = 'shield'
 
+class DoublemissilePowerup(Powerup):
+    def __init__(self):
+        super().__init__('doublemissile')
+        self.pType = 'doublemissile'
+
+# 수정
+class FriendPowerup(Powerup):
+    def __init__(self):
+        super().__init__('friendship')
+        self.pType = 'friendship'
+
+class LifePowerup(Powerup):
+    def __init__(self):
+        super().__init__('life')
+        self.pType = 'life'
 
 class Ship(MasterSprite):
     def __init__(self):
@@ -137,6 +152,7 @@ class Ship(MasterSprite):
         self.shieldUp = False
         self.vert = 0
         self.horiz = 0
+        self.life = 3   # 초기 생명 3개
 
     def initializeKeys(self):
         keyState = pygame.key.get_pressed()
@@ -176,7 +192,156 @@ class Ship(MasterSprite):
 
     def bomb(self):
         return Bomb(self)
+     
+class Friendship(MasterSprite):
+    def __init__(self):
+        super().__init__()
+        self.image, self.rect = load_image('friendship.png', -1)
+        self.original = self.image
+        # self.shield, self.rect = load_image('ship_shield.png', -1)
+        self.screen = pygame.display.get_surface()
+        self.area = self.screen.get_rect()
+        self.rect.midbottom = (self.screen.get_width() // 3, self.area.bottom)
+        # self.rect.midright = (self.screen.get_width() // 2, self.area.bottom)
+        self.radius = max(self.rect.width, self.rect.height)
+        self.alive = True
+        # self.shieldUp = False
+        self.vert = 0
+        self.horiz = 0
+        # self.life = 3
 
+    def initializeKeys(self):
+        # keyState = pygame.key.get_pressed()
+        self.vert = 0
+        self.horiz = 0
+        # if keyState[pygame.K_w]:
+        #     self.vert -= 2 * MasterSprite.speed
+        # if keyState[pygame.K_a]:
+        #     self.horiz -= 2 * MasterSprite.speed
+        # if keyState[pygame.K_s]:
+        #     self.vert += 2 * MasterSprite.speed
+        # if keyState[pygame.K_d]:
+        #     self.horiz += 2 * MasterSprite.speed
+    
+    def update(self):
+        newpos = self.rect.move((self.horiz, self.vert))
+        newhoriz = self.rect.move((self.horiz, 0))
+        newvert = self.rect.move((0, self.vert))
+
+        if not (newpos.left <= self.area.left
+                or newpos.top <= self.area.top
+                or newpos.right >= self.area.right
+                or newpos.bottom >= self.area.bottom):
+            self.rect = newpos
+        elif not (newhoriz.left <= self.area.left
+                  or newhoriz.right >= self.area.right):
+            self.rect = newhoriz
+        elif not (newvert.top <= self.area.top
+                  or newvert.bottom >= self.area.bottom):
+            self.rect = newvert
+
+        # if self.shieldUp and self.image != self.shield:
+        #     self.image = self.shield
+
+        # if not self.shieldUp and self.image != self.original:
+        #     self.image = self.original
+    
+    # def bomb(self):
+    #     return Bomb(self)  
+
+class Ship2(MasterSprite):
+    def __init__(self):
+        super().__init__()
+        self.image, self.rect = load_image('ship.png', -1)
+        self.original = self.image
+        self.shield, self.rect = load_image('ship_shield.png', -1)
+        self.screen = pygame.display.get_surface()
+        self.area = self.screen.get_rect()
+        self.rect.midbottom = (self.screen.get_width() // 2, self.area.bottom)
+        self.radius = max(self.rect.width, self.rect.height)
+        self.alive = True
+        self.shieldUp = False
+        self.vert = 0
+        self.horiz = 0
+        self.life = 3   # 초기 생명 3개
+
+    def initializeKeys(self):
+        keyState = pygame.key.get_pressed()
+        self.vert = 0
+        self.horiz = 0
+
+    def update(self):
+        newpos = self.rect.move((self.horiz, self.vert))
+        newhoriz = self.rect.move((self.horiz, 0))
+        newvert = self.rect.move((0, self.vert))
+
+        if not (newpos.left <= self.area.left
+                or newpos.top <= self.area.top
+                or newpos.right >= self.area.right
+                or newpos.bottom >= self.area.bottom):
+            self.rect = newpos
+        elif not (newhoriz.left <= self.area.left
+                  or newhoriz.right >= self.area.right):
+            self.rect = newhoriz
+        elif not (newvert.top <= self.area.top
+                  or newvert.bottom >= self.area.bottom):
+            self.rect = newvert
+
+        if self.shieldUp and self.image != self.shield:
+            self.image = self.shield
+
+        if not self.shieldUp and self.image != self.original:
+            self.image = self.original
+
+    def bomb(self):
+        return Bomb(self)
+
+class Ship3(MasterSprite):
+    def __init__(self):
+        super().__init__()
+        self.image, self.rect = load_image('ship.png', -1)
+        self.original = self.image
+        self.shield, self.rect = load_image('ship_shield.png', -1)
+        self.screen = pygame.display.get_surface()
+        self.area = self.screen.get_rect()
+        self.rect.midbottom = (self.screen.get_width() // 2, self.area.bottom)
+        self.radius = max(self.rect.width, self.rect.height)
+        self.alive = True
+        self.shieldUp = False
+        self.vert = 0
+        self.horiz = 0
+        self.life = 3   # 초기 생명 3개
+
+    def initializeKeys(self):
+        keyState = pygame.key.get_pressed()
+        self.vert = 0
+        self.horiz = 0
+
+    def update(self):
+        newpos = self.rect.move((self.horiz, self.vert))
+        newhoriz = self.rect.move((self.horiz, 0))
+        newvert = self.rect.move((0, self.vert))
+
+        if not (newpos.left <= self.area.left
+                or newpos.top <= self.area.top
+                or newpos.right >= self.area.right
+                or newpos.bottom >= self.area.bottom):
+            self.rect = newpos
+        elif not (newhoriz.left <= self.area.left
+                  or newhoriz.right >= self.area.right):
+            self.rect = newhoriz
+        elif not (newvert.top <= self.area.top
+                  or newvert.bottom >= self.area.bottom):
+            self.rect = newvert
+
+        if self.shieldUp and self.image != self.shield:
+            self.image = self.shield
+
+        if not self.shieldUp and self.image != self.original:
+            self.image = self.original
+
+    def bomb(self):
+        return Bomb(self)
 
 class Alien(MasterSprite):
     pool = pygame.sprite.Group()
@@ -238,6 +403,7 @@ class Siney(Alien):
         self.amp = random.randint(self.rect.width, 3 * self.rect.width)
         self.freq = (1 / 20)
         self.moveFunc = lambda: (self.amp * math.sin(self.loc * self.freq), 0)
+        self.pType = 'green'
 
 
 class Roundy(Alien):
@@ -254,6 +420,7 @@ class Roundy(Alien):
             math.cos(
                 self.loc *
                 self.freq))
+        self.pType = 'red'
 
 
 class Spikey(Alien):
@@ -266,18 +433,21 @@ class Spikey(Alien):
                                  else self.slope * self.period // 2
                                  - self.slope * ((self.loc % self.period)
                                  - self.period // 2), 0)
+        self.pType = 'orange'
 
 
 class Fasty(Alien):
     def __init__(self):
         super().__init__('white')
-        self.moveFunc = lambda: (0, 3 * self.loc)
+        self.moveFunc = lambda: (0, 1.5 * self.loc)
+        self.pType = 'white'
 
 
 class Crawly(Alien):
     def __init__(self):
         super().__init__('yellow')
         self.moveFunc = lambda: (self.loc, 0)
+        self.pType = 'yellow'
 
     def update(self):
         horiz, vert = self.moveFunc()
