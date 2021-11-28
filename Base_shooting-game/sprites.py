@@ -127,7 +127,6 @@ class DoublemissilePowerup(Powerup):
         super().__init__('doublemissile')
         self.pType = 'doublemissile'
 
-# 수정
 class FriendPowerup(Powerup):
     def __init__(self):
         super().__init__('friendship')
@@ -138,21 +137,26 @@ class LifePowerup(Powerup):
         super().__init__('life')
         self.pType = 'life'
 
+
 class Ship(MasterSprite):
     def __init__(self):
         super().__init__()
         self.image, self.rect = load_image('ship.png', -1)
         self.original = self.image
         self.shield, self.rect = load_image('ship_shield.png', -1)
+        # 수정 쉴드랑 조금 다른 방법이 필요함
+        # self.bomb, self.rect = load_image('ship_bomb.png', -1)
         self.screen = pygame.display.get_surface()
         self.area = self.screen.get_rect()
         self.rect.midbottom = (self.screen.get_width() // 2, self.area.bottom)
         self.radius = max(self.rect.width, self.rect.height)
         self.alive = True
         self.shieldUp = False
+        # 수정
+        # self.bombUp = False
         self.vert = 0
         self.horiz = 0
-        self.life = 3   # 초기 생명 3개
+        self.life = 3  
 
     def initializeKeys(self):
         keyState = pygame.key.get_pressed()
@@ -189,39 +193,36 @@ class Ship(MasterSprite):
 
         if not self.shieldUp and self.image != self.original:
             self.image = self.original
+        
+        # 수정
+        # if self.bombUp and self.image != self.bomb:
+        #     self.image = self.bomb
+
+        # if not self.bombUp and self.image != self.original:
+        #     self.image = self.original
 
     def bomb(self):
         return Bomb(self)
-     
+
 class Friendship(MasterSprite):
     def __init__(self):
         super().__init__()
         self.image, self.rect = load_image('friendship.png', -1)
         self.original = self.image
-        # self.shield, self.rect = load_image('ship_shield.png', -1)
         self.screen = pygame.display.get_surface()
         self.area = self.screen.get_rect()
         self.rect.midbottom = (self.screen.get_width() // 3, self.area.bottom)
-        # self.rect.midright = (self.screen.get_width() // 2, self.area.bottom)
         self.radius = max(self.rect.width, self.rect.height)
+        # 초기 위치를 ship이랑 연관짓고 싶은데 잘안됨
+        # self.rect.right = ship.rect.left
+        # self.radius = max(ship.rect.left, self.rect.height)
         self.alive = True
-        # self.shieldUp = False
         self.vert = 0
         self.horiz = 0
-        # self.life = 3
-
+      
     def initializeKeys(self):
-        # keyState = pygame.key.get_pressed()
         self.vert = 0
         self.horiz = 0
-        # if keyState[pygame.K_w]:
-        #     self.vert -= 2 * MasterSprite.speed
-        # if keyState[pygame.K_a]:
-        #     self.horiz -= 2 * MasterSprite.speed
-        # if keyState[pygame.K_s]:
-        #     self.vert += 2 * MasterSprite.speed
-        # if keyState[pygame.K_d]:
-        #     self.horiz += 2 * MasterSprite.speed
     
     def update(self):
         newpos = self.rect.move((self.horiz, self.vert))
@@ -239,15 +240,10 @@ class Friendship(MasterSprite):
         elif not (newvert.top <= self.area.top
                   or newvert.bottom >= self.area.bottom):
             self.rect = newvert
-
-        # if self.shieldUp and self.image != self.shield:
-        #     self.image = self.shield
-
-        # if not self.shieldUp and self.image != self.original:
-        #     self.image = self.original
     
-    # def bomb(self):
-    #     return Bomb(self)  
+    def remove(self) :
+        pygame.sprite.Sprite.kill(self)
+
 
 class Ship2(MasterSprite):
     def __init__(self):
@@ -257,13 +253,14 @@ class Ship2(MasterSprite):
         self.shield, self.rect = load_image('ship_shield.png', -1)
         self.screen = pygame.display.get_surface()
         self.area = self.screen.get_rect()
-        self.rect.midbottom = (self.screen.get_width() // 2, self.area.bottom)
+        self.rect.midbottom = (self.screen.get_width() * (1/4) , self.area.bottom)
+        # self.rect.midbottom = (500 * 1/3, 500)
         self.radius = max(self.rect.width, self.rect.height)
         self.alive = True
         self.shieldUp = False
         self.vert = 0
         self.horiz = 0
-        self.life = 3   # 초기 생명 3개
+        self.life = 3   
 
     def initializeKeys(self):
         keyState = pygame.key.get_pressed()
@@ -304,7 +301,8 @@ class Ship3(MasterSprite):
         self.shield, self.rect = load_image('ship_shield.png', -1)
         self.screen = pygame.display.get_surface()
         self.area = self.screen.get_rect()
-        self.rect.midbottom = (self.screen.get_width() // 2, self.area.bottom)
+        self.rect.midbottom = (self.screen.get_width() * (3/4), self.area.bottom)
+        # self.rect.midbottom = (500 * 0.5, 500)
         self.radius = max(self.rect.width, self.rect.height)
         self.alive = True
         self.shieldUp = False

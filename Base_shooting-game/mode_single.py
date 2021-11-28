@@ -1,10 +1,10 @@
 import pygame
 import random
 import sys
+from sprites import (MasterSprite, Ship, Friendship, Alien, Missile, BombPowerup,
+                     ShieldPowerup, DoublemissilePowerup, FriendPowerup, Explosion, Siney, Spikey, Fasty,
+                     Roundy, Crawly)
 
-from sprites import (MasterSprite, Ship, Alien, Missile, BombPowerup,
-                     ShieldPowerup, DoublemissilePowerup, FriendPowerup, Explosion, LifePowerup,
-                     Siney, Spikey, Fasty, Roundy, Crawly)
 from database import Database
 from load import load_image, load_sound, load_music
 from menu import *
@@ -67,10 +67,43 @@ class Single():
         menu, menuRect = load_image("menu.png")
         menuRect.midtop = screen.get_rect().midtop
 
+    # Prepare game objects
+        speed = 1.5
+        MasterSprite.speed = speed
+        alienPeriod = 60 / speed
+        clockTime = 60  # maximum FPS
+        clock = pygame.time.Clock()
+        ship = Ship()
+        
+        miniship = Friendship()
+        
+        initialAlienTypes = (Siney, Spikey)
+        # powerupTypes = (BombPowerup, ShieldPowerup, DoublemissilePowerup, FriendPowerup)
+        # 잠시 수정
+        powerupTypes = (DoublemissilePowerup, FriendPowerup)
+
         # pause
         pause,pauseRect = load_image('pause.png')
         pauseRect.midtop = screen.get_rect().midtop
-        pauseMenu = False 
+
+
+        pauseMenu = False
+
+        # Sprite groups
+        alldrawings = pygame.sprite.Group()
+        allsprites = pygame.sprite.RenderPlain((ship,))
+        MasterSprite.allsprites = allsprites
+        Alien.pool = pygame.sprite.Group(
+            [alien() for alien in initialAlienTypes for _ in range(5)])
+        Alien.active = pygame.sprite.Group()
+        Missile.pool = pygame.sprite.Group([Missile() for _ in range(10)]) 
+        Missile.active = pygame.sprite.Group()
+        Explosion.pool = pygame.sprite.Group([Explosion() for _ in range(10)])
+        Explosion.active = pygame.sprite.Group()
+        
+        bombs = pygame.sprite.Group()
+        powerups = pygame.sprite.Group()
+
 
     # Prepare game objects
         # life
@@ -85,7 +118,24 @@ class Single():
         ship_explode_sound = load_sound('ship_explode.ogg')
         load_music('music_loop.ogg')
 
-        # font
+
+        alienPeriod = clockTime // 2
+        curTime = 0
+        aliensThisWave, aliensLeftThisWave, Alien.numOffScreen = 10, 10, 10
+        wave = 1
+        doublemissile = False
+        friendship = False
+        miniship.alive = False
+
+        bombsHeld = 3
+        score = 0
+        missilesFired = 0
+        powerupTime = 10 * clockTime
+        powerupTimeLeft = powerupTime
+        betweenWaveTime = 3 * clockTime
+        betweenWaveCount = betweenWaveTime
+        betweenDoubleTime = 8 * clockTime
+        betweenDoubleCount = betweenDoubleTime
         font = pygame.font.Font(None, 36)
 
     # Etc... 아래 루프에 넣어야하나
@@ -99,10 +149,11 @@ class Single():
         initialAlienTypes = (Siney, Spikey)
         # 수정
         powerupTypes = (BombPowerup, ShieldPowerup, DoublemissilePowerup, 
-                        FriendPowerup, LifePowerup)
+                        FriendPowerup)
         
         bombs = pygame.sprite.Group()
         powerups = pygame.sprite.Group()
+        
 
 
     # 데베 함수 메뉴 구현
@@ -200,14 +251,17 @@ class Single():
             ship.alive = True
             ship.life = 3
             ship.initializeKeys()
+            miniship.alive = False
 
 
         # 본게임시작
             while ship.alive:
                 clock.tick(clockTime)
 
+
             # Drop Items
-                if aliensLeftThisWave >= 10:
+                  # 게임 test를 위해 잠시 조절
+                if aliensLeftThisWave >= 0:
                     powerupTimeLeft -= 1
                 if powerupTimeLeft <= 0:
                     powerupTimeLeft = powerupTime
@@ -223,12 +277,24 @@ class Single():
                     # Ship Moving
                     elif (event.type == pygame.KEYDOWN
                         and event.key in direction.keys()):
-                        ship.horiz += direction[event.key][0] * speed
-                        ship.vert += direction[event.key][1] * speed
+                        if friendship :
+                            ship.horiz += direction[event.key][0] * speed
+                            ship.vert += direction[event.key][1] * speed
+                            miniship.horiz = ship.horiz
+                            miniship.vert = ship.vert
+                        else :
+                            ship.horiz += direction[event.key][0] * speed
+                            ship.vert += direction[event.key][1] * speed
                     elif (event.type == pygame.KEYUP
                         and event.key in direction.keys()):
-                        ship.horiz -= direction[event.key][0] * speed
-                        ship.vert -= direction[event.key][1] * speed
+                        if friendship :
+                            ship.horiz -= direction[event.key][0] * speed
+                            ship.vert -= direction[event.key][1] * speed
+                            miniship.horiz = ship.horiz 
+                            miniship.vert = ship.vert
+                        else :
+                            ship.horiz -= direction[event.key][0] * speed
+                            ship.vert -= direction[event.key][1] * speed
                     # Missile
                     elif (event.type == pygame.KEYDOWN
                         and event.key == pygame.K_SPACE):
@@ -237,8 +303,13 @@ class Single():
                             Missile.position(ship.rect.topright)
                             missilesFired += 2
                         else : 
-                            Missile.position(ship.rect.midtop)
-                            missilesFired += 1
+                            if friendship :
+                                Missile.position(ship.rect.midtop)
+                                Missile.position(miniship.rect.midtop)
+                                missilesFired += 2
+                            else :
+                                Missile.position(ship.rect.midtop)
+                                missilesFired += 1
                         if soundFX:
                             missile_sound.play()
                     # Bomb
@@ -396,9 +467,20 @@ class Single():
                             doublemissile = True
                         elif powerup.pType == 'friendship' :
                             friendship = True
-                        elif powerup.pType == 'life':
-                            if ship.life < 3:
-                                ship.life += 1    
+                        # elif powerup.pType == 'life':
+                        #     if ship.life < 3:
+                        #         ship.life += 1    
+                            # miniship=Friendship()
+                            # miniship=Friendship()
+                            # miniship_group=pygame.sprite.RenderPlain(miniship)
+                            miniship.alive = True
+                            # miniship.update()
+                            # miniship_group.draw(screen)
+                            # 문제인 부분
+                            # allsprites = pygame.sprite.RenderPlain((ship,miniship,))
+                            MasterSprite.allsprites.add(miniship)
+                            allsprites.update()
+                            allsprites.draw(screen)
                         powerup.kill()
                     elif powerup.rect.top > powerup.area.bottom:
                         powerup.kill()
@@ -430,6 +512,22 @@ class Single():
                     elif betweenDoubleCount == 0:
                         doublemissile = False
                         betweenDoubleCount = betweenDoubleTime
+                
+                if friendship:
+                    if betweenDoubleCount > 0:
+                        betweenDoubleCount -= 1
+                    elif betweenDoubleCount == 0:
+                        friendship = False
+                        miniship.alive = False
+                        miniship.remove()
+                        
+                        betweenDoubleCount = betweenDoubleTime
+                        # allsprites = pygame.sprite.RenderPlain((ship,))
+                        # MasterSprite.allsprites = allsprites
+                        # allsprites.draw(screen)
+                        # alldrawings.update()
+
+                
 
             # Detertmine when to move to next wave
                 if aliensLeftThisWave <= 0:
